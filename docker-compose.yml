@@ -1,0 +1,9 @@
+# Portal Sol: portal externo ficticio con el que debe sincronizar tu servicio.
+# Arranque: docker compose up -d   →   http://localhost:4000  (ver API.md)
+services:
+  portal-sol:
+    image: ghcr.io/avantio/portal-sol:latest
+    container_name: portal-sol
+    ports:
+      - "4000:4000"
+    restart: unless-stopped
