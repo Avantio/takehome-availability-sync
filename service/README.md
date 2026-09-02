@@ -1,11 +1,11 @@
-# Tu servicio
+# Your service
 
-Crea aquí el servicio de sincronización (Node.js + TypeScript). La estructura interna es libre.
+Build the sync service here (Node.js + TypeScript). The internal structure is up to you.
 
-Incluye en este directorio un `README.md` (puedes sustituir este) con, al menos:
+Include in this directory a `README.md` (feel free to replace this one) with, at least:
 
-- cómo instalar dependencias y arrancar el servicio;
-- cómo lanzar los tests;
-- cómo configurar la URL de Portal Sol (por defecto `http://localhost:4000`).
+- how to install dependencies and start the service;
+- how to run the tests;
+- how to configure the Portal Sol URL (default `http://localhost:4000`).
 
-Recuerda que `SPEC.md` y `PROCESS.md` van en la raíz del repositorio, no aquí.
+Remember that `SPEC.md` and `PROCESS.md` go in the repository root, not here.

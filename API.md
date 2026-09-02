@@ -1,63 +1,63 @@
-# Portal Sol — Documentación de la API
+# Portal Sol — API documentation
 
-Portal Sol es un portal de alquiler vacacional (ficticio). Esta API permite a un channel manager
-publicar la disponibilidad y el precio por noche de los alojamientos que tiene anunciados en el portal.
+Portal Sol is a (fictional) vacation-rental portal. This API lets a channel manager publish the
+availability and nightly price of the accommodations it has listed on the portal.
 
-> Este documento es el **contrato completo** del portal. No dispones del código del servidor:
-> trabaja únicamente con lo que aquí se describe y con el comportamiento observable.
+> This document is the **complete contract** of the portal. You do not have access to the server code:
+> work only with what is described here and with the observable behaviour.
 
-## Arranque
+## Getting started
 
-El portal se distribuye como imagen Docker:
+The portal is distributed as a Docker image:
 
 ```bash
 docker run --rm -p 4000:4000 ghcr.io/avantio/portal-sol:latest
 ```
 
-URL base: `http://localhost:4000`. Comprueba que está arriba con `GET /health`.
+Base URL: `http://localhost:4000`. Check that it is up with `GET /health`.
 
-El estado del portal vive en memoria: al reiniciar el contenedor se vuelve a los datos iniciales.
+The portal keeps its state in memory: restarting the container brings back the initial data.
 
-## Autenticación
+## Authentication
 
-Todas las rutas bajo `/api/` requieren la cabecera `X-Api-Key`.
+Every route under `/api/` requires the `X-Api-Key` header.
 
 ```
 X-Api-Key: sol-demo-key
 ```
 
-Sin cabecera, o con una clave incorrecta, el portal responde `401 UNAUTHORIZED`.
+Without the header, or with a wrong key, the portal answers `401 UNAUTHORIZED`.
 
-## Convenciones
+## Conventions
 
-- Cuerpos y respuestas en JSON (`Content-Type: application/json`).
-- Las fechas son **días naturales** en formato `YYYY-MM-DD`, sin hora ni zona horaria.
-- Los rangos de fechas son **inclusivos** en ambos extremos: `from: 2026-10-01, to: 2026-10-07` cubre 7 noches.
-- `pricePerNight` es un número decimal (EUR por noche), mayor o igual que 0.
-- Los errores siempre tienen esta forma:
+- Request and response bodies are JSON (`Content-Type: application/json`).
+- Dates are **calendar days** in `YYYY-MM-DD` format, with no time or time zone.
+- Date ranges are **inclusive** at both ends: `from: 2026-10-01, to: 2026-10-07` covers 7 nights.
+- `pricePerNight` is a decimal number (EUR per night), greater than or equal to 0.
+- Errors always have this shape:
 
   ```json
   { "error": { "code": "RANGE_TOO_LARGE", "message": "Date range covers 32 days; ..." } }
   ```
 
-## Límites y comportamiento del portal
+## Limits and portal behaviour
 
-Como cualquier portal real, Portal Sol tiene sus particularidades. Tenlas en cuenta al diseñar tu integración:
+Like any real portal, Portal Sol has its quirks. Keep them in mind when designing your integration:
 
-| Situación | Respuesta del portal | Qué se espera de tu integración |
+| Situation | Portal response | What is expected from your integration |
 |---|---|---|
-| Superas el número de peticiones por minuto permitido | `429 RATE_LIMITED` con cabecera `Retry-After: <segundos>` | No reintentar antes de que pasen esos segundos. Las peticiones rechazadas no se procesan. |
-| El portal no puede atender la petición en ese momento | `503 UNAVAILABLE` | La petición **no** se ha aplicado. Puede reintentarse más tarde. |
-| El portal tarda en responder | Sin respuesta durante un tiempo | Configura un timeout razonable. **Una petición que expira por timeout puede haber sido procesada igualmente por el portal.** |
-| Rango de fechas demasiado largo | `400 RANGE_TOO_LARGE` | Cada petición puede cubrir como máximo **31 días** (`from` y `to` inclusive). Rangos mayores deben dividirse en varias peticiones. |
+| You exceed the allowed number of requests per minute | `429 RATE_LIMITED` with a `Retry-After: <seconds>` header | Do not retry before that many seconds have passed. Rejected requests are not processed. |
+| The portal cannot handle the request right now | `503 UNAVAILABLE` | The request has **not** been applied. It can be retried later. |
+| The portal is slow to answer | No response for a while | Configure a reasonable timeout. **A request that times out on your side may still have been processed by the portal.** |
+| Date range too long | `400 RANGE_TOO_LARGE` | Each request may cover at most **31 days** (`from` and `to` inclusive). Longer ranges must be split into several requests. |
 
-Los `PUT` son **idempotentes**: repetir exactamente la misma petición deja el portal en el mismo estado.
+`PUT` requests are **idempotent**: repeating exactly the same request leaves the portal in the same state.
 
 ## Endpoints
 
 ### `GET /api/v1/accommodations`
 
-Lista los alojamientos publicados en el portal.
+Lists the accommodations published on the portal.
 
 ```json
 {
@@ -70,8 +70,8 @@ Lista los alojamientos publicados en el portal.
 
 ### `GET /api/v1/accommodations/:id`
 
-Estado actual, día a día, de un alojamiento. Acepta los parámetros opcionales `from` y `to`
-(`YYYY-MM-DD`, inclusivos) para acotar el resultado.
+Current day-by-day state of an accommodation. Accepts the optional `from` and `to` query parameters
+(`YYYY-MM-DD`, inclusive) to narrow the result.
 
 ```
 GET /api/v1/accommodations/acc-1003?from=2026-10-01&to=2026-10-03
@@ -89,13 +89,13 @@ GET /api/v1/accommodations/acc-1003?from=2026-10-01&to=2026-10-03
 }
 ```
 
-Errores: `404 NOT_FOUND` si el alojamiento no existe; `400 INVALID_DATE` si `from`/`to` no son fechas válidas.
+Errors: `404 NOT_FOUND` if the accommodation does not exist; `400 INVALID_DATE` if `from`/`to` are not valid dates.
 
 ### `PUT /api/v1/accommodations/:id/availability`
 
-Fija disponibilidad y precio para todos los días del rango indicado.
+Sets availability and price for every day in the given range.
 
-Cuerpo:
+Body:
 
 ```json
 {
@@ -106,36 +106,36 @@ Cuerpo:
 }
 ```
 
-| Campo | Tipo | Reglas |
+| Field | Type | Rules |
 |---|---|---|
-| `from` | string `YYYY-MM-DD` | Obligatorio. Fecha válida. |
-| `to` | string `YYYY-MM-DD` | Obligatorio. Igual o posterior a `from`. **Como máximo 31 días** contando ambos extremos. |
-| `available` | boolean | Obligatorio. |
-| `pricePerNight` | number | Obligatorio. `>= 0`. |
+| `from` | string `YYYY-MM-DD` | Required. Valid date. |
+| `to` | string `YYYY-MM-DD` | Required. Same day as `from` or later. **At most 31 days** counting both ends. |
+| `available` | boolean | Required. |
+| `pricePerNight` | number | Required. `>= 0`. |
 
-Respuesta `200`:
+`200` response:
 
 ```json
 { "accommodationId": "acc-1003", "from": "2026-10-01", "to": "2026-10-07", "daysUpdated": 7 }
 ```
 
-Errores: `400 INVALID_BODY`, `400 INVALID_DATE`, `400 RANGE_TOO_LARGE`, `404 NOT_FOUND`, además de los
-`401`, `429` y `503` descritos más arriba.
+Errors: `400 INVALID_BODY`, `400 INVALID_DATE`, `400 RANGE_TOO_LARGE`, `404 NOT_FOUND`, plus the
+`401`, `429` and `503` described above.
 
 ### `GET /health`
 
-Sin autenticación. Responde `200 { "status": "ok", ... }` cuando el portal está listo para recibir peticiones.
+No authentication. Answers `200 { "status": "ok", ... }` when the portal is ready to receive requests.
 
-## Endpoints de administración
+## Admin endpoints
 
-Estos endpoints **no forman parte de la API real** de un portal: existen para que puedas verificar tu
-implementación (manualmente o desde tus tests). No requieren `X-Api-Key`, no cuentan para el límite de
-peticiones y tu servicio de sincronización no debería depender de ellos en su funcionamiento normal.
+These endpoints are **not part of a real portal API**: they exist so you can verify your implementation
+(manually or from your tests). They require no `X-Api-Key`, do not count towards the request limit, and
+your sync service should not depend on them during normal operation.
 
 ### `GET /__admin/requests`
 
-Registro de todas las peticiones recibidas bajo `/api/` (incluidas las rechazadas con `401`, `429` o `503`),
-en orden de llegada. Se conservan las últimas 1000.
+Log of every request received under `/api/` (including those rejected with `401`, `429` or `503`), in
+arrival order. The last 1000 entries are kept.
 
 ```json
 {
@@ -163,32 +163,32 @@ en orden de llegada. Se conservan las últimas 1000.
 }
 ```
 
-Si el cliente cerró la conexión antes de recibir respuesta, la entrada tiene `"status": null` y
-`"clientDisconnected": true`. Eso no significa que la petición no se haya aplicado.
+If the client closed the connection before receiving a response, the entry has `"status": null` and
+`"clientDisconnected": true`. That does not mean the request was not applied.
 
 ### `POST /__admin/reset`
 
-Restaura los datos iniciales de todos los alojamientos, vacía el registro de peticiones y reinicia el
-contador del límite por minuto. Responde `200 { "ok": true }`. Útil al principio de cada test.
+Restores the initial data of every accommodation, empties the request log and resets the per-minute
+counter. Answers `200 { "ok": true }`. Handy at the start of each test.
 
-## Códigos de error
+## Error codes
 
-| HTTP | `code` | Significado |
+| HTTP | `code` | Meaning |
 |---|---|---|
-| 400 | `INVALID_BODY` | El cuerpo no es JSON válido o falta/sobra algún campo, o tiene un tipo incorrecto. |
-| 400 | `INVALID_DATE` | Fecha mal formada, inexistente (p. ej. `2026-02-30`) o `to` anterior a `from`. |
-| 400 | `RANGE_TOO_LARGE` | El rango cubre más de 31 días. |
-| 401 | `UNAUTHORIZED` | Falta la cabecera `X-Api-Key` o la clave no es válida. |
-| 404 | `NOT_FOUND` | El alojamiento (o la ruta) no existe. |
-| 429 | `RATE_LIMITED` | Límite de peticiones por minuto superado. Consulta `Retry-After`. |
-| 503 | `UNAVAILABLE` | El portal no puede atender la petición ahora. Nada se ha aplicado. |
+| 400 | `INVALID_BODY` | The body is not valid JSON, a field is missing or unexpected, or has the wrong type. |
+| 400 | `INVALID_DATE` | Malformed or non-existent date (e.g. `2026-02-30`), or `to` earlier than `from`. |
+| 400 | `RANGE_TOO_LARGE` | The range covers more than 31 days. |
+| 401 | `UNAUTHORIZED` | Missing `X-Api-Key` header or invalid key. |
+| 404 | `NOT_FOUND` | The accommodation (or the route) does not exist. |
+| 429 | `RATE_LIMITED` | Requests-per-minute limit exceeded. Check `Retry-After`. |
+| 503 | `UNAVAILABLE` | The portal cannot handle the request right now. Nothing was applied. |
 
-## Alojamientos disponibles
+## Available accommodations
 
-El portal arranca con estos 10 alojamientos, cada uno con 90 días de disponibilidad a partir de la fecha
-actual. Puedes consultarlos con `GET /api/v1/accommodations`.
+The portal starts with these 10 accommodations, each with 90 days of availability from the current
+date. You can list them with `GET /api/v1/accommodations`.
 
-| id | Nombre |
+| id | Name |
 |---|---|
 | `acc-1001` | Apartamento Sol y Mar |
 | `acc-1002` | Casa Rural Los Olivos |

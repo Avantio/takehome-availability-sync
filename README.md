@@ -1,22 +1,22 @@
-# Take-home — Servicio de sincronización de disponibilidad
+# Take-home — Availability sync service
 
-Gracias por participar en el proceso de selección de Avantio. Este ejercicio está pensado para **3-4 horas de trabajo efectivo**. Tienes una semana para entregarlo, pero no esperamos ni valoramos que le dediques más tiempo del indicado: preferimos un alcance bien acotado y justificado a una solución exhaustiva.
+Thank you for taking part in Avantio's selection process. This exercise is designed for **3-4 hours of effective work**. You have one week to deliver it, but we neither expect nor reward spending more time than that: we prefer a well-scoped, justified solution over an exhaustive one.
 
-## Sobre el uso de IA
+## On using AI
 
-En Avantio trabajamos a diario con agentes de código (Claude Code, Cursor, Copilot o similares). En este ejercicio su uso **no solo está permitido: es lo esperado**. Trabaja como lo harías en tu día a día. Lo que nos interesa evaluar es cómo diriges a la IA, qué decides delegar y cómo validas el resultado, no si eres capaz de escribir el código sin ayuda.
+At Avantio we work with coding agents every day (Claude Code, Cursor, Copilot or similar). In this exercise their use is **not just allowed: it is expected**. Work the way you would on a normal day. What we want to evaluate is how you direct the AI, what you decide to delegate and how you validate the result, not whether you can write the code unaided.
 
-## Contexto
+## Context
 
-Avantio es una plataforma para gestores de alquiler vacacional. Cuando un gestor cambia la disponibilidad o el precio de un alojamiento para unas fechas, ese cambio debe propagarse a los portales externos donde el alojamiento está publicado (Booking, Airbnb, etc.).
+Avantio is a platform for vacation-rental property managers. When a manager changes the availability or price of an accommodation for a set of dates, that change must propagate to the external portals where the accommodation is listed (Booking, Airbnb, etc.).
 
-En este ejercicio trabajarás con **un único portal externo ficticio, "Portal Sol"**, del que te proporcionamos un servidor listo para arrancar con Docker. Como todo portal real, tiene sus particularidades: limita el número de peticiones por minuto y a veces falla o tarda en responder. Su API está documentada en [`API.md`](./API.md); **no dispones de su código**, así que trátalo como tratarías a un portal de verdad.
+In this exercise you will work with **a single fictional external portal, "Portal Sol"**, for which we provide a server ready to run with Docker. Like any real portal it has its quirks: it limits the number of requests per minute and sometimes fails or is slow to respond. Its API is documented in [`API.md`](./API.md); **you do not have access to its code**, so treat it as you would a real portal.
 
-## Tu tarea
+## Your task
 
-Construye un servicio backend en **Node.js + TypeScript** que:
+Build a backend service in **Node.js + TypeScript** that:
 
-1. **Reciba actualizaciones de disponibilidad y precio** de alojamientos a través de una API HTTP:
+1. **Receives availability and price updates** for accommodations through an HTTP API:
 
    ```
    POST /updates
@@ -29,75 +29,75 @@ Construye un servicio backend en **Node.js + TypeScript** que:
    }
    ```
 
-2. **Sincronice esas actualizaciones con Portal Sol** a través de su API (documentada en `API.md`), garantizando que:
-   - **Ninguna actualización se pierde**, aunque el portal falle o limite las peticiones.
-   - El servicio **respeta los límites del portal** y no lo satura.
-   - El resultado final en el portal refleja lo que el gestor pidió.
+2. **Syncs those updates with Portal Sol** through its API (documented in `API.md`), guaranteeing that:
+   - **No update is lost**, even if the portal fails or throttles requests.
+   - The service **respects the portal's limits** and does not overwhelm it.
+   - The final state in the portal reflects what the manager asked for.
 
-3. **Exponga el estado de sincronización** de un alojamiento:
+3. **Exposes the sync status** of an accommodation:
 
    ```
    GET /accommodations/:id/sync-status
    ```
 
-   Qué información devolver y con qué estructura es una decisión tuya; justifícala en la spec.
+   What information to return and in which shape is your decision; justify it in the spec.
 
-### Lo que no pedimos
+### What we do not ask for
 
-- Base de datos real: la persistencia en memoria es aceptable. Si decides usar una, explica por qué.
-- Autenticación del servicio, despliegue ni interfaz de usuario.
-- Cobertura de tests del 100%: preferimos pocos tests que prueben lo importante a muchos que no prueben nada.
+- A real database: in-memory persistence is acceptable. If you decide to use one, explain why.
+- Authentication for the service, deployment or a user interface.
+- 100% test coverage: we prefer a few tests that check what matters over many that check nothing.
 
-## Entregables
+## Deliverables
 
-Los tres son obligatorios y tienen el mismo peso que el código en la evaluación:
+All three are mandatory and weigh as much as the code in the evaluation:
 
-1. **`SPEC.md`** — Escrita **antes de empezar a programar** y committeada como primer commit. Describe qué vas a construir, las decisiones de diseño principales y los criterios de aceptación. Puedes actualizarla durante el ejercicio, pero queremos ver el punto de partida en el historial.
+1. **`SPEC.md`** — Written **before you start coding** and committed as the first commit. It describes what you are going to build, the main design decisions and the acceptance criteria. You may update it during the exercise, but we want to see the starting point in the history.
 
-2. **Código** con tests, en la carpeta `service/` de este mismo repositorio, con historial de commits (no un único commit final).
+2. **Code** with tests, in the `service/` folder of this same repository, with a commit history (not a single final commit).
 
-3. **`PROCESS.md`** — Media página basta. Cuéntanos:
-   - Qué delegaste a la IA y qué hiciste a mano, y por qué.
-   - Dónde la IA se equivocó o propuso algo que descartaste, y cómo lo detectaste.
-   - Qué dejaste fuera por tiempo y qué harías a continuación.
+3. **`PROCESS.md`** — Half a page is enough. Tell us:
+   - What you delegated to the AI and what you did by hand, and why.
+   - Where the AI got it wrong or proposed something you discarded, and how you noticed.
+   - What you left out for lack of time and what you would do next.
 
-## Cómo empezar
+## Getting started
 
-Necesitas Docker (o Docker Desktop) y Node.js 22 o superior.
+You need Docker (or Docker Desktop) and Node.js 22 or later.
 
 ```bash
-# 1. Crea tu repositorio a partir de este template ("Use this template" en GitHub) y clónalo.
+# 1. Create your repository from this template ("Use this template" on GitHub) and clone it.
 
-# 2. Arranca Portal Sol
+# 2. Start Portal Sol
 docker compose up -d
 curl http://localhost:4000/health          # → {"status":"ok",...}
 
-#    Alternativa sin compose:
+#    Alternative without compose:
 #    docker run --rm -p 4000:4000 ghcr.io/avantio/portal-sol:latest
 
-# 3. Lee API.md y escribe SPEC.md. Haz tu primer commit.
+# 3. Read API.md and write SPEC.md. Make your first commit.
 
-# 4. Crea tu servicio en la carpeta service/
-#    (estructura libre; incluye instrucciones para arrancarlo y lanzar los tests)
+# 4. Build your service in the service/ folder
+#    (free structure; include instructions to start it and run the tests)
 ```
 
-Portal Sol expone dos endpoints de administración que te resultarán útiles para verificar tu implementación:
-`GET /__admin/requests` devuelve el registro de todas las peticiones que ha recibido (incluidas las rechazadas)
-y `POST /__admin/reset` lo deja todo como al principio. Están descritos en `API.md`.
+Portal Sol exposes two admin endpoints that will help you verify your implementation:
+`GET /__admin/requests` returns the log of every request it has received (including rejected ones)
+and `POST /__admin/reset` puts everything back to the initial state. They are described in `API.md`.
 
-El estado del portal vive en memoria: si reinicias el contenedor, vuelve a los datos iniciales.
+The portal keeps its state in memory: if you restart the container it goes back to the initial data.
 
-## Qué evaluamos
+## What we evaluate
 
-| Dimensión | Qué miramos |
+| Dimension | What we look at |
 |---|---|
-| Especificación | Claridad, criterios de aceptación, decisiones justificadas |
-| Calidad del código | Diseño, tests con valor real, mantenibilidad |
-| Uso de la IA | Notas de proceso concretas y honestas; coherencia con el historial de commits |
-| Juicio técnico | Trade-offs razonados, alcance acotado, qué dejaste fuera y por qué |
+| Specification | Clarity, acceptance criteria, justified decisions |
+| Code quality | Design, tests with real value, maintainability |
+| Use of AI | Concrete and honest process notes; consistency with the commit history |
+| Technical judgement | Reasoned trade-offs, bounded scope, what you left out and why |
 
-## Entrega
+## Submission
 
-Cuando termines, comparte el repositorio (público o con acceso para el usuario que te indiquemos) respondiendo al correo del proceso. En la siguiente fase repasaremos contigo tu solución y la extenderemos juntos en directo.
+When you are done, share the repository (public or with access for the user we indicate) by replying to the process email. In the next phase we will go through your solution with you and extend it together, live.
 
-¡Suerte!
+Good luck!
