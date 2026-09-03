@@ -63,7 +63,7 @@ All three are mandatory and weigh as much as the code in the evaluation:
 
 ## Getting started
 
-You need Docker (or Docker Desktop) and Node.js 22 or later.
+You need Docker (or Docker Desktop) and Node.js 24 or later.
 
 ```bash
 # 1. Create your repository from this template ("Use this template" on GitHub) and clone it.
