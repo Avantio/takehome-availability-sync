@@ -42,9 +42,13 @@ Build a backend service in **Node.js + TypeScript** that:
 
    What information to return and in which shape is your decision; justify it in the spec.
 
+4. **Persists its state in a real database**, PostgreSQL or MongoDB (pick one; both are provided in `docker-compose.yml`), so that **no accepted update is lost if the service restarts**. How you model pending work, retries and status is a design decision; justify it in the spec.
+
+5. **Is observable**: structured logs and a metrics endpoint (Prometheus text format or equivalent) that would let someone on call tell whether synchronisation is healthy without reading the code. Cover at least the pending work, the outcome of portal calls and their latency, and retries. In the spec, say which alerts you would set on those metrics.
+
 ### What we do not ask for
 
-- A real database: in-memory persistence is acceptable. If you decide to use one, explain why.
+- Dashboards or an alerting stack: exposing the metrics is enough. You do not need Grafana or Prometheus running.
 - Authentication for the service, deployment or a user interface.
 - 100% test coverage: we prefer a few tests that check what matters over many that check nothing.
 
@@ -68,12 +72,14 @@ You need Docker (or Docker Desktop) and Node.js 24 or later.
 ```bash
 # 1. Create your repository from this template ("Use this template" on GitHub) and clone it.
 
-# 2. Start Portal Sol
-docker compose up -d
+# 2. Start Portal Sol and the database you choose (one profile or the other)
+docker compose --profile postgres up -d    # Portal Sol + PostgreSQL 18 on localhost:5432
+docker compose --profile mongo up -d       # Portal Sol + MongoDB 8 on localhost:27017
 curl http://localhost:4000/health          # → {"status":"ok",...}
 
-#    Alternative without compose:
-#    docker run --rm -p 4000:4000 ghcr.io/avantio/portal-sol:latest
+#    Connection strings (see docker-compose.yml):
+#    postgres://sync:sync@localhost:5432/sync
+#    mongodb://localhost:27017/sync
 
 # 3. Read API.md and write SPEC.md. Make your first commit.
 
@@ -92,7 +98,7 @@ The portal keeps its state in memory: if you restart the container it goes back 
 | Dimension | What we look at |
 |---|---|
 | Specification | Clarity, acceptance criteria, justified decisions |
-| Code quality | Design, tests with real value, maintainability |
+| Code quality | Design, tests with real value, maintainability; persistence and observability that actually work |
 | Use of AI | Concrete and honest process notes; consistency with the commit history |
 | Technical judgement | Reasoned trade-offs, bounded scope, what you left out and why |
 
